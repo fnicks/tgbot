@@ -57,11 +57,12 @@ describe('LinkService (Unit Test)', () => {
     await linkService.createLink('https://example1.com', 'Example 1');
     await linkService.createLink('https://example2.com', 'Example 2');
 
-    const links = await linkService.getAllLinks();
+    const data = await linkService.getAllLinks();
 
-    expect(links).toHaveLength(2);
-    expect(links[0].url).toBe('https://example1.com');
-    expect(links[1].url).toBe('https://example2.com');
+    expect(data.links).toHaveLength(2);
+    expect(data.links[0].url).toBe('https://example1.com');
+    expect(data.links[1].url).toBe('https://example2.com');
+    expect(data.total).toBe(2);
   });
 
   it('должен получить ссылку по id', async () => {
