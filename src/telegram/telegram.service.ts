@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as TelegramBot from 'node-telegram-bot-api';
-import { LINKS_LIST_PAGE_ELEMENTS, WELCOME_MESSAGE } from 'src/consts';
+import { LINKS_LIST_PAGE_ELEMENTS, WELCOME_MESSAGE } from 'src/helpers/consts';
+import { isValidUrl } from 'src/helpers/utils';
 import { LinkService } from 'src/link/link.service';
 
 @Injectable()
@@ -26,7 +27,7 @@ export class TelegramService implements OnModuleInit {
       const url = match[1];
       const internalName = match[2];
 
-      if (!this.isValidUrl(url)) {
+      if (!isValidUrl(url)) {
         this.bot.sendMessage(chatId, 'Неверный URL!');
         return;
       }
@@ -123,10 +124,5 @@ export class TelegramService implements OnModuleInit {
         inline_keyboard: [inlineKeyboard],
       },
     });
-  }
-
-  private isValidUrl(url: string): boolean {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return urlRegex.test(url);
   }
 }

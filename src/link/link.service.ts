@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Link } from './link.entity';
-import { LINKS_LIST_PAGE_ELEMENTS } from 'src/consts';
+import { LINKS_LIST_PAGE_ELEMENTS } from 'src/helpers/consts';
 
 @Injectable()
 export class LinkService {
