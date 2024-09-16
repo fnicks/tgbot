@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Link } from './link.entity';
+import { LINKS_LIST_PAGE_ELEMENTS } from 'src/consts';
 
 @Injectable()
 export class LinkService {
@@ -15,8 +16,17 @@ export class LinkService {
     return this.linkRepository.save(link);
   }
 
-  async getAllLinks(): Promise<Link[]> {
-    return this.linkRepository.find();
+  // Получение всех ссылок с пагинацией
+  async getAllLinks(
+    page: number = 1,
+    limit: number = LINKS_LIST_PAGE_ELEMENTS,
+  ): Promise<{ links: Link[]; total: number }> {
+    const [links, total] = await this.linkRepository.findAndCount({
+      take: limit,
+      skip: (page - 1) * limit,
+    });
+
+    return { links, total };
   }
 
   async getLinkById(id: string): Promise<Link> {

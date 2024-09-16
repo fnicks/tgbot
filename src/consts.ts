@@ -7,3 +7,4 @@ export const WELCOME_MESSAGE = `
 
 Просто введи одну из команд, чтобы начать!
       `;
+export const LINKS_LIST_PAGE_ELEMENTS = 10;

@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as TelegramBot from 'node-telegram-bot-api';
-import { WELCOME_MESSAGE } from 'src/consts';
+import { LINKS_LIST_PAGE_ELEMENTS, WELCOME_MESSAGE } from 'src/consts';
 import { LinkService } from 'src/link/link.service';
 
 @Injectable()
@@ -38,17 +38,21 @@ export class TelegramService implements OnModuleInit {
     // Получение списка всех ссылок
     this.bot.onText(/\/list/, async (msg) => {
       const chatId = msg.chat.id;
-      const links = await this.linkService.getAllLinks();
+      await this.sendPaginatedLinks(chatId, 1);
+    });
 
-      if (links.length === 0) {
-        this.bot.sendMessage(chatId, 'Нет сохраненных ссылок.');
-        return;
+    this.bot.on('callback_query', async (callbackQuery) => {
+      const message = callbackQuery.message;
+      const data = callbackQuery.data;
+
+      const match = data.match(/list_(\d+)/);
+      if (match) {
+        const page = parseInt(match[1], 10);
+        await this.sendPaginatedLinks(message.chat.id, page);
+
+        // Закрываем всплывающее сообщение (если необходимо)
+        this.bot.answerCallbackQuery(callbackQuery.id);
       }
-
-      const message = links
-        .map((link) => `Код: ${link.id}, Название: ${link.internalName}`)
-        .join('\n');
-      this.bot.sendMessage(chatId, message);
     });
 
     // Получение ссылки по коду
@@ -77,6 +81,47 @@ export class TelegramService implements OnModuleInit {
       }
       await this.linkService.deleteLink(id);
       this.bot.sendMessage(chatId, 'Ссылка удалена!');
+    });
+  }
+
+  // Отправка пагинированного списка ссылок
+  private async sendPaginatedLinks(chatId: number, page: number) {
+    const { links, total } = await this.linkService.getAllLinks(page);
+    const totalPages = Math.ceil(total / LINKS_LIST_PAGE_ELEMENTS);
+
+    if (links.length === 0) {
+      this.bot.sendMessage(chatId, 'Нет сохранённых ссылок.');
+      return;
+    }
+
+    let message = `Страница ${page} из ${totalPages}:\n\n`;
+    message += links
+      .map((link) => `Код: ${link.id}, Название: ${link.internalName}`)
+      .join('\n');
+
+    // Создаём inline-кнопки для пагинации
+    const inlineKeyboard = [];
+
+    // Добавляем кнопку "Предыдущая", если это не первая страница
+    if (page > 1) {
+      inlineKeyboard.push({
+        text: '⬅️ Предыдущая',
+        callback_data: `list_${page - 1}`,
+      });
+    }
+
+    // Добавляем кнопку "Следующая", если есть следующая страница
+    if (page < totalPages) {
+      inlineKeyboard.push({
+        text: 'Следующая ➡️',
+        callback_data: `list_${page + 1}`,
+      });
+    }
+
+    this.bot.sendMessage(chatId, message, {
+      reply_markup: {
+        inline_keyboard: [inlineKeyboard],
+      },
     });
   }
 
